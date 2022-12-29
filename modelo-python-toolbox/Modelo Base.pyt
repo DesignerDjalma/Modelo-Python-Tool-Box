@@ -1,24 +1,7 @@
+# -*- coding: utf-8 -*-
+
 import arcpy
 import inspect
-
-
-parametros_padrao = {
-    "name": None,
-    "displayName": None,
-    "direction": None,
-    "datatype": None,
-    "parameterType": None,
-    "enabled": None,
-    "category": None,
-    "symbology": None,
-    "multiValue": None
-}
-
-
-dict_param_string  = {"direction":"Input", "datatype":"GPString"}
-dict_param_feature = {"direction":"Input", "datatype":"GPFeatureLayer"}
-dict_param_folder  = {"direction":"Input", "datatype":"DEFolder"}
-dict_para_compsto  = {"direction":"Input","datatype":["DERasterDataset", "DERasterCatalog","GPCoordinateSystem"]}
 
 
 def texto(txt):
@@ -32,9 +15,17 @@ def textoLista(lista):
 
 
 def dicionarioDeParametros(parameters):
-    """Retorna { nome_do_parametro : parametro }"""
+    """Retorna um dicionario nome_do_parametro:parametro """
     dict_params = { p.name:p for p in parameters }
     return dict_params
+
+
+def joinDict(*dicionarios):
+    """Retorna os dicionarios concatenados."""
+    return { chave:valor 
+        for dic in dicionarios
+            for chave, valor in dic.items() }
+
 
 
 class CategoriasLayout:
@@ -43,6 +34,29 @@ class CategoriasLayout:
 
     layout = "1. Para Atualizar o Layout"
     outra = texto("2. Outras Informações")
+
+
+parametros_padrao = {
+    "name": None,
+    "displayName": None,
+    "direction": None,
+    "datatype": None,
+    "parameterType": None,
+    "enabled": None,
+    "category": None,
+    "symbology": None,
+    "multiValue": None
+    }
+
+
+dp_string = dict_param_string  = {"direction":"Input", "datatype":"GPString"}
+dp_feature = dict_param_feature = {"direction":"Input", "datatype":"GPFeatureLayer"}
+dp_folder = dict_param_folder  = {"direction":"Input", "datatype":"DEFolder"}
+dp_comp = dict_para_composto  = {"direction":"Input","datatype":["DERasterDataset", "DERasterCatalog","GPCoordinateSystem"]}
+dp_c_lay = dict_param_cat_layout = {"category":CategoriasLayout.layout}
+dp_c_outra = dict_param_cat_layout = {"category":CategoriasLayout.outra}
+dp_mv = dict_param_multivalue = {"multiValue":True}
+
 
 # alguns padroes recorentes usados para o estado do Pará em Regularização Fundiária
 class Padroes:
@@ -58,13 +72,13 @@ class Argumentos:
 
     """Argumentos usados para criar os parametros."""
 
-    checkBoxes   = dict_param_string.update({"category":CategoriasLayout.layout,"multiValue":True})
-    stringLayout = dict_param_string.update({"category":CategoriasLayout.layout})
-    stringInfo   = dict_param_string.update({"category":CategoriasLayout.outra})
-    featureLayer = dict_param_feature
-    composto = dict_para_compsto
-    string = dict_param_string
-    folder = dict_param_folder
+    checkBoxes   = joinDict(dp_string, dp_c_lay, dp_mv)
+    stringLayout = joinDict(dp_string, dp_c_lay)
+    stringInfo   = joinDict(dp_string, dp_c_outra)
+    featureLayer = dp_feature
+    composto = dp_comp
+    string = dp_string
+    folder = dp_folder
 
 
 class Campos:
@@ -77,7 +91,7 @@ class Campos:
         ["key_parametro", "Required"],
 
         # Tipo de Parametros que ira aparecer no Layout Final
-        Argumentos.featureLayer,
+        Argumentos.string,
     ]
 
 
@@ -121,7 +135,7 @@ class Toolbox(object):
 
 class ModeloBase(object):
     def __init__(self):
-        self.label = "MeuModeloBase"
+        self.label = "Meu Modelo Base"
         self.description = ""
         self.canRunInBackground = False
 
@@ -132,6 +146,10 @@ class ModeloBase(object):
         return True
 
     def updateParameters(self, parameters):
+        if parameters[0].value == "teste":
+            parameters[0].setWarningMessage('This is not a point shapefile. Labeling is not recommended.')
+        else:
+            parameters[0].clearMessage()
         return
 
     def updateMessages(self, parameters):
@@ -139,3 +157,7 @@ class ModeloBase(object):
 
     def execute(self, parameters, messages):
         return
+
+
+if __name__ == "__main__":
+    pass
